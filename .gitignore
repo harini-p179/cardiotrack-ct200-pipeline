@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+.env
+
+# Databases and temporary files
+*.db
+*.sqlite
+*.sqlite3
+data/test_cases_store.json
+v1_raw.txt
+v2_raw.txt
+
+# OS files
+Thumbs.db
+desktop.ini
+.DS_Store
