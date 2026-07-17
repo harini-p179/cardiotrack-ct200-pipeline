@@ -49,7 +49,7 @@ class SectionNode(Base):
     title = Column(String(255), nullable=False)  # Normalized title, e.g. "Intended Use"
     level = Column(Integer, nullable=False)      # Hierarchy level: 0 (root), 1, 2, 4 etc.
     body = Column(String, nullable=True)         # Node body (text + lists + tables)
-    parent_id = Column(String(36), ForeignKey("section_nodes.id", ondelete="SET_NULL"), nullable=True)
+    parent_id = Column(String(36), ForeignKey("section_nodes.id", ondelete="SET NULL"), nullable=True)
     content_hash = Column(String(64), nullable=False) # SHA-256 of title + body
     status = Column(String(50), default="NEW")   # NEW, UNCHANGED, MODIFIED, DELETED
     created_at = Column(DateTime, default=datetime.utcnow)
