@@ -1,0 +1,326 @@
+{
+  "info": {
+    "_postman_id": "8ca00fc2-be5d-4f11-9a7f-d5e03b6de5a1",
+    "name": "CardioTrack CT-200 Document Pipeline API",
+    "description": "Comprehensive Postman collection for the CardioTrack CT-200 Document Pipeline. Demonstrates the end-to-end versioning, selection pinning, LLM QA test case generation, and real-time stale traceability detection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. List Ingested Versions",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "if (response && response.length >= 2) {",
+              "    // Ingestions are sorted descending by creation time (v2 is first, v1 is second)",
+              "    pm.collectionVariables.set(\"version_2_id\", response[0].id);",
+              "    pm.collectionVariables.set(\"version_1_id\", response[1].id);",
+              "    console.log(\"Set version_2_id:\", response[0].id);",
+              "    console.log(\"Set version_1_id:\", response[1].id);",
+              "} else {",
+              "    pm.expect.fail(\"Ensure you run 'python scripts/ingest.py' first to populate document versions 1.0 and 2.0.\");",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/nodes/versions",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "nodes",
+            "versions"
+          ]
+        },
+        "description": "Lists all document versions ingested in the SQLite store. We parse this to extract version UUIDs for V1 and V2."
+      },
+      "response": []
+    },
+    {
+      "name": "2. List Version 1.0 Top-Level Sections",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "if (response && response.length > 0) {",
+              "    // Find section 2 (Specifications) or use first section",
+              "    const targetNode = response.find(n => n.heading && n.heading.startsWith(\"2\")) || response[0];",
+              "    pm.collectionVariables.set(\"v1_node_id\", targetNode.id);",
+              "    console.log(\"Set v1_node_id:\", targetNode.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/nodes?version_num=1.0",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "nodes"
+          ],
+          "query": [
+            {
+              "key": "version_num",
+              "value": "1.0"
+            }
+          ]
+        },
+        "description": "Lists all level-1 sections belonging to manual version 1.0. Extracts a node ID (e.g. Section 2 Specifications) to pin to a selection."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Search Nodes in Version 1.0",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/nodes/search?q=cuff&version_num=1.0",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "nodes",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "q",
+              "value": "cuff"
+            },
+            {
+              "key": "version_num",
+              "value": "1.0"
+            }
+          ]
+        },
+        "description": "Searches for headings or body content containing the term 'cuff' in manual version 1.0."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Get Section Details by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/nodes/{{v1_node_id}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "nodes",
+            "{{v1_node_id}}"
+          ]
+        },
+        "description": "Retrieves the full details of a specific node, including its immediate children outline and a recursively reconstructed plain text body."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Compare Section Across Versions",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/nodes/{{v1_node_id}}/compare",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "nodes",
+            "{{v1_node_id}}",
+            "compare"
+          ]
+        },
+        "description": "Compares a specific node ID against its counterpart in the previous or subsequent version, providing a change status (UNCHANGED, MODIFIED, NEW, DELETED) and unified diff."
+      },
+      "response": []
+    },
+    {
+      "name": "6. Create a Version-Pinned Selection",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const response = pm.response.json();",
+              "pm.collectionVariables.set(\"selection_id\", response.id);",
+              "console.log(\"Set selection_id:\", response.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Specifications Selection\",\n  \"version_id\": \"{{version_1_id}}\",\n  \"node_ids\": [\"{{v1_node_id}}\"]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/selections",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "selections"
+          ]
+        },
+        "description": "Saves a named group of version-pinned section node IDs. This selection remains pinned to version 1.0 even when version 2.0 is active."
+      },
+      "response": []
+    },
+    {
+      "name": "7. List All Selections",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/selections",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "selections"
+          ]
+        },
+        "description": "Lists all saved user selections."
+      },
+      "response": []
+    },
+    {
+      "name": "8. Get Selection details by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/selections/{{selection_id}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "selections",
+            "{{selection_id}}"
+          ]
+        },
+        "description": "Retrieves the detail for the pinned selection, verifying nodes mapping."
+      },
+      "response": []
+    },
+    {
+      "name": "9. Generate Test Cases (LLM/Mock Ingestion)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/generations/{{selection_id}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "generations",
+            "{{selection_id}}"
+          ]
+        },
+        "description": "Generates QA test cases from the selected nodes. It uses the Gemini API if GEMINI_API_KEY is configured, else falls back to local structured mock generators, saving output in the NoSQL database."
+      },
+      "response": []
+    },
+    {
+      "name": "10. Retrieve Test Cases (With Real-Time Staleness)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/retrieval?selection_id={{selection_id}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "retrieval"
+          ],
+          "query": [
+            {
+              "key": "selection_id",
+              "value": "{{selection_id}}"
+            }
+          ]
+        },
+        "description": "Retrieves test cases from the NoSQL database. Performs real-time staleness check: because manual version 2.0 is now active and its counterpart requirements are modified, the returned test cases will show a status of STALE with details."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "version_2_id",
+      "value": ""
+    },
+    {
+      "key": "version_1_id",
+      "value": ""
+    },
+    {
+      "key": "v1_node_id",
+      "value": ""
+    },
+    {
+      "key": "selection_id",
+      "value": ""
+    }
+  ]
+}
