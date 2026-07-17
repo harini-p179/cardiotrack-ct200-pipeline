@@ -3,11 +3,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.models.models import Version, SectionNode
-from app.schemas.schemas import NodeBriefResponse, NodeResponse, NodeDetailResponse, CompareResponse
+from app.schemas.schemas import NodeBriefResponse, NodeResponse, NodeDetailResponse, CompareResponse, VersionResponse
 from app.services.versioning_service import VersionMatcher
 from app.core.logging import logger
 
 router = APIRouter(prefix="/nodes", tags=["browse"])
+
+@router.get("/versions", response_model=List[VersionResponse])
+def list_versions(db: Session = Depends(get_db)):
+    """Lists all ingested document versions."""
+    versions = db.query(Version).order_by(Version.created_at.desc()).all()
+    return versions
 
 def _get_latest_version(db: Session) -> str:
     """Helper to get the latest ingested version number."""

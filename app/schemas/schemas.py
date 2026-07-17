@@ -115,3 +115,14 @@ class TestCaseResponse(BaseModel):
     staleness_reason: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class VersionResponse(BaseModel):
+    id: str
+    document_id: str
+    version_number: str
+    created_at: datetime
+    content_hash: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
