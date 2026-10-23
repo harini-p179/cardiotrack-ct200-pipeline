@@ -75,6 +75,17 @@ def read_dashboard():
     index_file = STATIC_DIR / "index.html"
     return FileResponse(index_file)
 
+@app.get("/download/approach-document-pdf")
+def download_approach_doc():
+    pdf_file = BASE_DIR / "approach_document.pdf"
+    if pdf_file.exists():
+        return FileResponse(
+            pdf_file, 
+            media_type="application/pdf", 
+            filename="CardioTrack_CT200_Approach_Document_Harini_P.pdf"
+        )
+    return JSONResponse(status_code=404, content={"detail": "PDF not found."})
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
