@@ -121,7 +121,7 @@ If test cases are requested for the same selection twice:
 ## 7. Submission Email Draft
 
 ```text
-Subject: Submission: AI Engineering Internship Assignment - CardioTrack CT-200 Document Pipeline - [Your Name]
+Subject: Submission: AI Engineering Internship Assignment - CardioTrack CT-200 Document Pipeline - Harini P
 
 Dear Tri9T AI Team,
 
@@ -141,7 +141,7 @@ Key Highlights:
 Thank you for the opportunity, and I look forward to walking you through the implementation and design choices.
 
 Best regards,
-[Your Name]
-[Your Contact Information / LinkedIn Profile]
+Harini P
+honey.porumamilla@gmail.com
 ```
 
