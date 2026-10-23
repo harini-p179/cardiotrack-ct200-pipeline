@@ -46,13 +46,34 @@ app.include_router(selection.router, prefix=settings.API_V1_STR)
 app.include_router(llm.router, prefix=settings.API_V1_STR)
 app.include_router(retrieval.router, prefix=settings.API_V1_STR)
 
+from pathlib import Path
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "app" / "static"
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
 @app.get("/")
-def read_root():
+def read_root(request: Request):
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        index_file = STATIC_DIR / "index.html"
+        if index_file.exists():
+            return FileResponse(index_file)
     return {
         "project": settings.PROJECT_NAME,
         "status": "healthy",
-        "api_documentation": "/docs"
+        "api_documentation": "/docs",
+        "web_dashboard": "/dashboard"
     }
+
+@app.get("/dashboard")
+@app.get("/ui")
+def read_dashboard():
+    index_file = STATIC_DIR / "index.html"
+    return FileResponse(index_file)
 
 if __name__ == "__main__":
     import uvicorn
