@@ -128,8 +128,8 @@ Dear Tri9T AI Team,
 I am pleased to submit my solution for the AI Engineering Internship Assignment.
 
 Repository & Documentation:
-- GitHub Repository: https://github.com/[your-username]/cardiotrack-ct200-pipeline
-- Approach Document & Decision Log: https://github.com/[your-username]/cardiotrack-ct200-pipeline/blob/master/approach_document.md
+- GitHub Repository: https://github.com/harini-p179/cardiotrack-ct200-pipeline
+- Approach Document & Decision Log: https://github.com/harini-p179/cardiotrack-ct200-pipeline/blob/main/approach_document.md
 - Interactive Postman Collection: ./postman_collection.json
 
 Key Highlights:
