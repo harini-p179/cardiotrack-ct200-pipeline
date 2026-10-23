@@ -157,6 +157,13 @@ class DocumentParser:
         
         parts = numbering.split(".")
         if all(p.isdigit() for p in parts):
+            # Guard against quantities/measurements like "500 cycles" or "120 mmHg"
+            # Section chapters do not exceed 20, and headings must start with an uppercase letter
+            if int(parts[0]) > 20:
+                return None
+            if not title or not title[0].isupper():
+                return None
+                
             level = len(parts)
             return {
                 "numbering": numbering,
@@ -232,6 +239,15 @@ class DocumentParser:
                     path_parts = [p[1]["title"].lower().replace(" ", "_") for p in stack if p[0] > 0]
                     path_parts.append(title.lower().replace(" ", "_"))
                     logical_node_id = "/".join(path_parts)
+                    
+                    # Disambiguate if duplicate heading path already exists
+                    existing_logical_ids = {n["logical_node_id"] for n in self.nodes}
+                    if logical_node_id in existing_logical_ids:
+                        base_logical_id = logical_node_id
+                        counter = 2
+                        while f"{base_logical_id}_{counter}" in existing_logical_ids:
+                            counter += 1
+                        logical_node_id = f"{base_logical_id}_{counter}"
                     
                     new_node = {
                         "id": str(uuid.uuid4()),

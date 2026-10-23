@@ -100,3 +100,86 @@ def test_build_tree_with_mock_elements():
     assert "systolic and diastolic" in l2["body"]
     assert "| Parameter | Value |" in l2["body"]
     assert l2["parent_id"] == l1["id"]
+
+def test_irregularity_duplicate_headings():
+    """
+    Irregularity Test 1:
+    Duplicate headings across sections (or under same section) must produce
+    distinct node IDs, stable distinct logical_node_ids, and retain correct parent IDs.
+    """
+    parser = DocumentParser("dummy.pdf", "1.0")
+    parser.raw_elements = [
+        {"type": "text", "content": "1 Section One", "page": 1, "top": 10},
+        {"type": "text", "content": "1.1 General Information", "page": 1, "top": 20},
+        {"type": "text", "content": "Content of section 1.1", "page": 1, "top": 30},
+        {"type": "text", "content": "2 Section Two", "page": 1, "top": 50},
+        {"type": "text", "content": "2.1 General Information", "page": 1, "top": 60},
+        {"type": "text", "content": "Content of section 2.1", "page": 1, "top": 70},
+    ]
+    nodes = parser.build_tree()
+    # root + 2 level-1 + 2 level-2 = 5 nodes
+    assert len(nodes) == 5
+    
+    sec1 = next(n for n in nodes if n["heading"] == "1 Section One")
+    sec2 = next(n for n in nodes if n["heading"] == "2 Section Two")
+    sub1 = next(n for n in nodes if n["heading"] == "1.1 General Information")
+    sub2 = next(n for n in nodes if n["heading"] == "2.1 General Information")
+    
+    # Assert distinct node IDs
+    assert sub1["id"] != sub2["id"]
+    # Assert correct distinct parent IDs
+    assert sub1["parent_id"] == sec1["id"]
+    assert sub2["parent_id"] == sec2["id"]
+    # Assert distinct logical node IDs
+    assert sub1["logical_node_id"] == "section_one/general_information"
+    assert sub2["logical_node_id"] == "section_two/general_information"
+
+def test_irregularity_broken_hierarchy_level_skip():
+    """
+    Irregularity Test 2:
+    Broken hierarchy level skip (e.g. level 2 followed directly by level 4, skipping level 3).
+    The parser must not fail, must attach the level 4 node to the closest ancestor (level 2),
+    and validate_hierarchy must report 0 orphans.
+    """
+    parser = DocumentParser("dummy.pdf", "1.0")
+    parser.raw_elements = [
+        {"type": "text", "content": "2 Specifications", "page": 1, "top": 10},
+        {"type": "text", "content": "2.1 Battery", "page": 1, "top": 20},
+        {"type": "text", "content": "Battery specifications text.", "page": 1, "top": 30},
+        {"type": "text", "content": "2.1.1.1 Battery Life Under Typical Use", "page": 1, "top": 40},
+        {"type": "text", "content": "500 cycles or 1 year.", "page": 1, "top": 50},
+    ]
+    nodes = parser.build_tree()
+    # root + level 1 (2) + level 2 (2.1) + level 4 (2.1.1.1) = 4 nodes
+    assert len(nodes) == 4
+    
+    spec_node = next(n for n in nodes if n["heading"] == "2 Specifications")
+    battery_node = next(n for n in nodes if n["heading"] == "2.1 Battery")
+    skip_node = next(n for n in nodes if n["heading"] == "2.1.1.1 Battery Life Under Typical Use")
+    
+    assert battery_node["parent_id"] == spec_node["id"]
+    # Level 4 node skipped level 3; it must be parented directly to level 2 battery node
+    assert skip_node["parent_id"] == battery_node["id"]
+    assert skip_node["level"] == 4
+    assert parser.validate_hierarchy() is True
+
+def test_irregularity_numbered_classification_not_misidentified():
+    """
+    Irregularity Test 3:
+    Numbered classification items with colons (e.g. '1. Normal: Blood pressure is standard')
+    must not be treated as headings, preventing corruption of section hierarchy.
+    """
+    parser = DocumentParser("dummy.pdf", "1.0")
+    parser.raw_elements = [
+        {"type": "text", "content": "3 Device Operation", "page": 1, "top": 10},
+        {"type": "text", "content": "1. Normal: Blood pressure is within standard range.", "page": 1, "top": 20},
+        {"type": "text", "content": "2. Elevated: Blood pressure is mildly elevated.", "page": 1, "top": 30},
+    ]
+    nodes = parser.build_tree()
+    # root + 1 section = 2 nodes total (the classification items remain in body)
+    assert len(nodes) == 2
+    op_node = nodes[1]
+    assert op_node["heading"] == "3 Device Operation"
+    assert "1. Normal: Blood pressure is within standard range." in op_node["body"]
+    assert "2. Elevated: Blood pressure is mildly elevated." in op_node["body"]
+
