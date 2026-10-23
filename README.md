@@ -59,15 +59,21 @@ python scripts/ingest.py
 This builds `ct200_pipeline.db` in your workspace and populates it with document versions `1.0` and `2.0`.
 
 ### Step 2: Start the Web API Server
-Run the FastAPI development server using Uvicorn:
+Run the FastAPI development server using Uvicorn on port 8001:
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --port 8001 --reload
 ```
-The server will start at `http://localhost:8000`. You can access the interactive Swagger API documentation at:
-👉 **[http://localhost:8000/docs](http://localhost:8000/docs)**
+The server will start at `http://localhost:8001`. You can access the interactive Swagger API documentation at:
+👉 **[http://localhost:8001/docs](http://localhost:8001/docs)**
 
-### Step 3: Run the Test Suite
-Execute the entire unit and integration test suite to verify the parser, versioning comparator, API routes, LLM services, and stale traceability checks:
+### Step 3: Run the End-to-End Demonstration Script
+We provide an automated demonstration script that runs through the complete end-to-end lifecycle (browsing, comparing, version-pinned selection creation, LLM QA test case generation, and real-time stale traceability mapping):
+```bash
+python scripts/demo_run.py
+```
+
+### Step 4: Run the Test Suite
+Execute the entire unit and integration test suite to verify the parser, structural irregularity handling, versioning comparator, API routes, LLM services, and stale traceability checks:
 ```bash
 pytest -v
 ```

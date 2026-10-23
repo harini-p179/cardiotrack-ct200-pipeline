@@ -32,13 +32,35 @@ We chose **`pdfplumber`** over simple layout-agnostic text scrapers (like `PyPDF
 3. **Text Line Grouping**: Non-table words are sorted by vertical (`top`) and horizontal (`x0`) coordinates. Words aligned within a vertical tolerance of 3.0 points are grouped into single lines of text.
 4. **Layout Re-Sorting**: Text lines and markdown tables are combined and sorted by their `top` coordinate. This preserves reading order page-by-page.
 
-### Heading Parsing & stack-based Hierarchy Rebuilder
+### Heading Parsing & Stack-Based Hierarchy Rebuilder
 - We parse section headers using a regex looking for decimal numbering (e.g., `1.2`, `2.1.1.1`).
 - We build the tree using a stack of `(level, node_dict)`. When a heading is parsed:
   - We pop nodes from the stack whose level is greater than or equal to the new node's level.
   - The node remaining at the top of the stack becomes the parent.
   - The new node is pushed onto the stack.
 - **Broken Hierarchy Handling**: If the document skips levels (e.g., section `2.1` followed by `2.1.1.1` skipping level 3), the parser does not fail. The level 4 node is parented to the level 2 node (the closest parent on the stack), and a warning is logged.
+
+### Structural Inconsistencies & Edge Cases Discovered in the CT-200 Manual
+1. **Broken Hierarchy Level Skips**: Section `2.1` is followed directly by `2.1.1.1 Battery Life Under Typical Use` (skipping Level 3 entirely).
+2. **Table Word Coordinate Overlaps**: Standard PDF extractors extract table cells and surrounding paragraphs as interleaved words, causing table contents to break sentences.
+3. **Numbered Classification Lists**: Sections contain numbered medical classifications (e.g., `1. Normal: Blood pressure is standard.`, `2. Elevated: ...`). Naive heading regexes falsely identify these as new chapters.
+4. **Numeric Measurements and Quantities**: Text lines starting with numbers such as `120 mmHg is standard` or `500 cycles or 1 year` must not be mistaken for section headings.
+5. **Repeated Header/Footer Artifacts**: Running page titles (`CardioTrack CT-200 Home Blood Pressure Monitor`) and page numbers appear on every page and must be excluded from section body text.
+6. **Duplicate Headings Across Different Sections**: Common subsection titles (e.g., `General Information` or `Technical Specifications`) occur across different parent chapters.
+
+### Engineering Process, Debugging Methodology & Validation
+- **What Failed Initially**:
+  1. Early word-grouping scrambled table cells with regular paragraph text because words were sorted only by vertical coordinate (`top`).
+  2. Numbered bullets (`1. Normal: ...`) and measurement values (`500 cycles...`) were captured by heading regex, generating ghost section nodes and fracturing the document outline.
+  3. Re-ingesting v2 without cross-parent path resolution caused duplicate heading titles to collide.
+- **How We Identified the Failures**:
+  - *Coordinate Inspection*: Dumped raw layout bounding boxes to verify word bounding boxes against table bounding boxes (`bbox`).
+  - *Text Diff Verification*: Compared raw PDF text dumps (`v1_raw.txt` and `v2_raw.txt`) against reconstructed node bodies.
+  - *Automated Edge-Case Tests*: Authored explicit unit tests in `tests/test_parser.py` testing duplicate headings, broken hierarchy level skips, and classification bullet items.
+- **Iterative Improvements Made**:
+  - Implemented spatial table bounding-box subtraction before text line extraction.
+  - Added title casing verification, colon-classification exclusion, and chapter limit guards (`int(parts[0]) <= 20`) to `parse_heading`.
+  - Added hierarchical path tracking (`parent/child`) and automatic suffix disambiguation (`_2`) for identical headings.
 
 ---
 
@@ -93,3 +115,33 @@ If test cases are requested for the same selection twice:
 2. **Interactive UI**: Develop a React-based frontend to display the document trees side-by-side with line-by-line diff highlights and test case traceability status.
 3. **Asynchronous Generation Task Queue**: Use Celery/Redis to run LLM generations as background tasks rather than synchronous API requests, preventing timeouts.
 4. **Auto-OCR Fallback**: Add a check that runs OCR (via PyMuPDF and Tesseract) on pages where no text is extracted, handling scanned pages automatically.
+
+---
+
+## 7. Submission Email Draft
+
+```text
+Subject: Submission: AI Engineering Internship Assignment - CardioTrack CT-200 Document Pipeline - [Your Name]
+
+Dear Tri9T AI Team,
+
+I am pleased to submit my solution for the AI Engineering Internship Assignment.
+
+Repository & Documentation:
+- GitHub Repository: https://github.com/[your-username]/cardiotrack-ct200-pipeline
+- Approach Document & Decision Log: https://github.com/[your-username]/cardiotrack-ct200-pipeline/blob/master/approach_document.md
+- Interactive Postman Collection: ./postman_collection.json
+
+Key Highlights:
+1. Spatial PDF Flow Extraction: Used pdfplumber bounding-box coordinates to subtract tables before line grouping, preventing table cell interleaving and preserving reading order.
+2. Stack-Based Tree Reconstruction & Irregularity Handling: Handled level-skipping (2.1 to 2.1.1.1) gracefully without dropped nodes or orphans, filtered non-heading measurements/bullets, and ensured duplicate headings across sections receive distinct IDs.
+3. Versioning & Stale Traceability: Implemented path-based logical node mapping and SHA-256 content hashing. Selections remain pinned to historical versions, and test cases dynamically report their staleness status with explicit reasons at retrieval time.
+4. Production-Ready Tech Stack: Built with FastAPI, SQLAlchemy 2.0, SQLite, portable NoSQL JSON/MongoDB storage, and 24 comprehensive automated unit/integration tests with 100% pass rate.
+
+Thank you for the opportunity, and I look forward to walking you through the implementation and design choices.
+
+Best regards,
+[Your Name]
+[Your Contact Information / LinkedIn Profile]
+```
+
