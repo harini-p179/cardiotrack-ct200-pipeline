@@ -32,12 +32,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/nodes/versions",
+          "raw": "http://localhost:8001/api/nodes/versions",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8000",
+          "port": "8001",
           "path": [
             "api",
             "nodes",
@@ -71,12 +71,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/nodes?version_num=1.0",
+          "raw": "http://localhost:8001/api/nodes?version_num=1.0",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8000",
+          "port": "8001",
           "path": [
             "api",
             "nodes"
@@ -98,12 +98,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/nodes/search?q=cuff&version_num=1.0",
+          "raw": "http://localhost:8001/api/nodes/search?q=cuff&version_num=1.0",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8000",
+          "port": "8001",
           "path": [
             "api",
             "nodes",
@@ -130,12 +130,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/nodes/{{v1_node_id}}",
+          "raw": "http://localhost:8001/api/nodes/{{v1_node_id}}",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8000",
+          "port": "8001",
           "path": [
             "api",
             "nodes",
@@ -152,12 +152,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/nodes/{{v1_node_id}}/compare",
+          "raw": "http://localhost:8001/api/nodes/{{v1_node_id}}/compare",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8000",
+          "port": "8001",
           "path": [
             "api",
             "nodes",
@@ -197,12 +197,12 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8000/api/selections",
+          "raw": "http://localhost:8001/api/selections",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8000",
+          "port": "8001",
           "path": [
             "api",
             "selections"
@@ -218,12 +218,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/selections",
+          "raw": "http://localhost:8001/api/selections",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8000",
+          "port": "8001",
           "path": [
             "api",
             "selections"
@@ -239,12 +239,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/selections/{{selection_id}}",
+          "raw": "http://localhost:8001/api/selections/{{selection_id}}",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8000",
+          "port": "8001",
           "path": [
             "api",
             "selections",
@@ -261,12 +261,12 @@
         "method": "POST",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/generations/{{selection_id}}",
+          "raw": "http://localhost:8001/api/generations/{{selection_id}}",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8000",
+          "port": "8001",
           "path": [
             "api",
             "generations",
@@ -283,12 +283,12 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/retrieval?selection_id={{selection_id}}",
+          "raw": "http://localhost:8001/api/retrieval?selection_id={{selection_id}}",
           "protocol": "http",
           "host": [
             "localhost"
           ],
-          "port": "8000",
+          "port": "8001",
           "path": [
             "api",
             "retrieval"
